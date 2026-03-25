@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f8fa;
+  --foreground: #131722;
+  --surface: #ffffff;
+  --border: #e6e8ef;
+  --muted: #596079;
+  --accent: #1d6cff;
+  --accent-hover: #0f57da;
+  --danger: #dd2f4c;
 }
 
 @theme inline {
@@ -12,15 +18,165 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), "Segoe UI", sans-serif;
+}
+
+.chatboard-shell {
+  min-height: 100vh;
+  padding: 2.5rem 1rem;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #eaf1ff 0%, transparent 60%),
+    radial-gradient(800px 600px at 100% 10%, #f4f7ff 0%, transparent 60%),
+    var(--background);
+  display: grid;
+  place-items: start center;
+}
+
+.chatboard-card {
+  width: min(760px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  box-shadow: 0 16px 40px rgba(15, 27, 58, 0.08);
+  padding: 1.5rem;
+}
+
+.chatboard-header h1 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.chatboard-kicker {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.chatboard-subtitle {
+  margin-top: 0.35rem;
+  color: var(--muted);
+}
+
+.chatboard-composer {
+  margin-top: 1.25rem;
+}
+
+.chatboard-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+}
+
+.chatboard-form input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  padding: 0.8rem 0.9rem;
+  background: #fbfcff;
+  outline: none;
+}
+
+.chatboard-form input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(29, 108, 255, 0.15);
+}
+
+button {
+  border: 0;
+  border-radius: 0.8rem;
+  padding: 0.8rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.chatboard-form button {
+  background: var(--accent);
+  color: white;
+}
+
+.chatboard-form button:hover {
+  background: var(--accent-hover);
+}
+
+.chatboard-messages {
+  margin-top: 1.25rem;
+}
+
+.chatboard-empty {
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  border-radius: 0.9rem;
+  padding: 1rem;
+}
+
+.chatboard-messages ul {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.chatboard-message-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border-radius: 0.9rem;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.chatboard-message-content {
+  font-size: 0.975rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.chatboard-message-date {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+button.danger {
+  background: #fff1f3;
+  color: var(--danger);
+}
+
+button.danger:hover {
+  background: #ffe5ea;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .chatboard-card {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  .chatboard-form {
+    grid-template-columns: 1fr;
+  }
+
+  .chatboard-message-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

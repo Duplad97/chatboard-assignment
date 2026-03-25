@@ -1,64 +1,118 @@
-import Image from "next/image";
+import { revalidatePath } from "next/cache";
+import { supabase, type Message } from "@/lib/supabase";
 
-export default function Home() {
+async function createMessage(formData: FormData) {
+  "use server";
+
+  const content = formData.get("content");
+  if (typeof content !== "string") {
+    return;
+  }
+
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return;
+  }
+
+  const { error } = await supabase.from("messages").insert({ content: trimmed });
+
+  if (error) {
+    throw new Error(`Failed to create message: ${error.message}`);
+  }
+
+  revalidatePath("/");
+}
+
+async function deleteMessage(formData: FormData) {
+  "use server";
+
+  const id = formData.get("id");
+  if (typeof id !== "string") {
+    return;
+  }
+
+  const { error } = await supabase.from("messages").delete().eq("id", id);
+
+  if (error) {
+    throw new Error(`Failed to delete message: ${error.message}`);
+  }
+
+  revalidatePath("/");
+}
+
+async function getMessages(): Promise<Message[]> {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("id, content, created_at")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to fetch messages: ${error.message}`);
+  }
+
+  return data ?? [];
+}
+
+function formatDateTime(isoDate: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(isoDate));
+}
+
+export default async function Home() {
+  const messages = await getMessages();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <div className="chatboard-shell">
+      <main className="chatboard-card">
+        <header className="chatboard-header">
+          <p className="chatboard-kicker">Community Board</p>
+          <h1>Chat Board</h1>
+          <p className="chatboard-subtitle">Share a thought. Keep it simple.</p>
+        </header>
+
+        <section className="chatboard-composer" aria-label="Create message">
+          <form action={createMessage} className="chatboard-form">
+            <label htmlFor="content" className="sr-only">
+              Message
+            </label>
+            <input
+              id="content"
+              name="content"
+              type="text"
+              maxLength={280}
+              placeholder="Write a message..."
+              required
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            <button type="submit">Save</button>
+          </form>
+        </section>
+
+        <section className="chatboard-messages" aria-label="Message list">
+          {messages.length === 0 ? (
+            <p className="chatboard-empty">No messages yet. Be the first one to post.</p>
+          ) : (
+            <ul>
+              {messages.map((message) => (
+                <li key={message.id} className="chatboard-message-item">
+                  <div>
+                    <p className="chatboard-message-content">{message.content}</p>
+                    <p className="chatboard-message-date">{formatDateTime(message.created_at)}</p>
+                  </div>
+                  <form action={deleteMessage}>
+                    <input type="hidden" name="id" value={message.id} />
+                    <button type="submit" className="danger">
+                      Delete
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </main>
     </div>
   );
